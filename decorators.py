@@ -1,6 +1,7 @@
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
+
 from gzip import decompress
 from random import randrange
 
@@ -18,6 +19,8 @@ def crawl(f):
 	def _(url, *args, **kwargs):
 		quotes = quote
 		save = False
+		data = None
+		
 		if "referer" in kwargs:
 			headers["Referer"] = kwargs["referer"]
 			if "referer" not in args:
@@ -31,6 +34,10 @@ def crawl(f):
 				del kwargs["host"]
 		else:
 			headers["Host"] = GetHost(url)
+			
+		if "data" in kwargs:
+			data = urlencode(kwargs["data"]).encode("utf-8")
+			del kwargs["data"]
 
 		if "quote" in kwargs:
 			if not kwargs["quote"]:
@@ -50,7 +57,8 @@ def crawl(f):
 		url = sUrl[0]+"://"+quotes(pUrl[0])+(("?"+"?".join(pUrl[1:])) if len(pUrl) != 1 else "")
 
 		print(url)
-		req = Request(url, headers=headers)
+		
+		req = Request(url, headers=headers, data=data)
 		try:
 			res = urlopen(req)
 			html = res.read()
@@ -92,7 +100,7 @@ def crawlTest(f):
 	return _
 
 
-def parser(src):
+def parser(src, ignore=[]):
 	def _(f):
 		def __(html, *args, **kwargs):
 			if type(html) == str:
@@ -101,7 +109,7 @@ def parser(src):
 			elif type(html) == MyHTMLParser:
 				d = html
 
-			d.setFilter(src)
+			d.setFilter(src, ignore)
 			if f.__name__ != "__":
 				d.parse()
 			return f(d, *args, **kwargs)

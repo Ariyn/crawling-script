@@ -9,11 +9,11 @@ class State:
 	def addTransition(self, target):
 		self.transitions.append((target.tag, target))
 
-	def Transition(self, element):
+	def Transition(self, element, ignore=[]):
 		changed, state = False, self
-
+		
 		for i in self.transitions:
-			if i[0] == element.tag and i[1].Match(element):
+			if (i[0] == element.tag and i[1].Match(element)) or i[0] in ignore:
 				changed, state = True, i[1]
 				break
 
@@ -28,14 +28,13 @@ class EmmetNode(State):
 		super(EmmetNode, self).__init__()
 
 		self.root = root
-
 		if root:
 			pattern = "root"
 		self.pattern, pattern = pattern, pattern.strip()
 
 		f = re.search(self.tagFilterEXP, pattern)
 		f = f.groupdict()
-		# print(f)
+
 		self.f, self.tag = f, f["tag"]
 		self.classes = f["class"].split(".")[1:] if f["class"] else []
 		self.ids = f["id"].split("#")[1:] if f["id"] else []
@@ -53,7 +52,7 @@ class EmmetNode(State):
 	def __str__(self):
 		return self.pattern
 
-	def Match(self, element, remove=False):
+	def Match(self, element, remove=False, ignore = []):
 		if self.root:
 			return False
 
@@ -94,7 +93,11 @@ class EmmetNode(State):
 					break
 # 				else:
 # 					print("here", i[1], conditions[i[0]])
-
+			
+		if self.tag in ignore:
+			print(self.tag)
+			filtered = True
+	
 		return filtered
 
 class Emmet:
@@ -103,10 +106,11 @@ class Emmet:
 	fcTokenEXP = "(\(|\)|\+|\>|\^|\*\*)"
 	fcDataTokenEXP = "\{(.+?)\}"
 
-	def __init__(self, pattern):
+	def __init__(self, pattern, ignore=[]):
 		self.stack, self.stackPointer = [], 0
 		self.stateMachine = []
 		self.pattern = pattern
+		self.ignore = ignore
 
 		self.splitPattern = [i for i in re.split(self.fcTokenEXP, pattern) if i]
 
@@ -228,8 +232,8 @@ class Emmet:
 			else:
 				self.currentNode = self.filterHistory[-1]
 		else:
-			changed, cn = self.currentNode.Transition(element)
-			filtered = cn.Match(element)
+			changed, cn = self.currentNode.Transition(element, ignore=self.ignore)
+			filtered = cn.Match(element, ignore = self.ignore)
 # 			if element.tag in ["img"]:
 # 				print(element, changed, cn, cn.tag, cn.Match(element), cn.classes, filtered)
 
