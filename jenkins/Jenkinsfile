@@ -8,7 +8,7 @@ pipeline {
         }
       }
       steps {
-        sh 'echo "hello"'
+        sh 'python3 src/test.py'
       }
       post {
           always {
