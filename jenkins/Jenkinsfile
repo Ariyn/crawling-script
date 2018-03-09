@@ -1,0 +1,20 @@
+pipeline {
+  agent none
+  stages {
+    stage('Test') {
+      agent {
+        docker {
+          image 'frolvald/alpine-python3'
+        }
+      }
+      steps {
+        sh 'echo "hello"'
+      }
+      post {
+          always {
+              junit 'test-reports/results.xml'
+          }
+      }
+    }
+  }
+}
