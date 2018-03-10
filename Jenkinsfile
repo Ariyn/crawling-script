@@ -19,10 +19,8 @@ pipeline {
           }
         }
         steps {
-            sh 'ls -al'
-            sh 'ls -al ~'
-            sh 'cat pylint.cfg'
             sh 'pylint3 --rcfile=./pylint.cfg src/*>pylint.log'
+            sh 'cat pylint.log'
         }
         post {
           always {
