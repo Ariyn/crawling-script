@@ -20,6 +20,7 @@ pipeline {
         }
         steps {
             sh 'pylint3 --rcfile=./pylint.cfg src/*>*.pylint.log'
+            sh 'ls -al'
             sh 'cat pylint.log'
         }
         post {
