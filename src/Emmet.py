@@ -95,7 +95,7 @@ class EmmetNode(State):
 # 					print("here", i[1], conditions[i[0]])
 			
 		if self.tag in ignore:
-			print(self.tag)
+# 			print(self.tag)
 			filtered = True
 	
 		return filtered

@@ -90,8 +90,8 @@ class MyHTMLParser(HTMLParser):
 		# self.emmetEngine[-1].printTransitions()
 
 	def getDMLS(self):
-		for i in self.emmetEngine:
-			print(i.dataMappingList)
+# 		for i in self.emmetEngine:
+# 			print(i.dataMappingList)
 		dmls = [[{z[0]:z[1] for z in dml} for dml in i.dataMappingList] for i in self.emmetEngine]
 # 		print(dmls)
 		return dmls
