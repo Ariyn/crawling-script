@@ -19,7 +19,7 @@ pipeline {
           }
         }
         steps {
-            sh 'pylint3 --rcfile=./pylint.cfg src/*>pylint.log'
+            sh 'pylint3 --rcfile=./pylint.cfg src/test.py>pylint.log'
             sh 'cat pylint.log'
         }
         post {
