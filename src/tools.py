@@ -1,35 +1,52 @@
+"""
+tools.py
+written by ariyn
+"""
 from random import randrange
-import json
-
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
-import multiprocessing, os, time
 from copy import copy
 from zipfile import ZipFile
 
+import json
+import unicodedata
+import re
+import multiprocessing
+import os
+import time
 
-GetHost = lambda url:url.replace("http://", "").replace("https://", "").split("/")[0]
+
+GetHost = lambda url: url.replace("http://", "").replace("https://", "").split("/")[0]
 
 def __randomHeader():
 	version = (randrange(40, 55, 1), randrange(0, 60, 1))
+	mozilla = "Mozilla/%d.0 (Windows NT 6.1)"%(version[0]//10)
+	webkit = "AppleWebKit/%d.%d (KHTML, like Gecko)"%(version[0])
+	chrome = "Chrome/%d.0.%d.115"%(version[1], randrange(2500, 3500))
+	safari = "Safari/%d.%d"%(version[0], version[1])
+
+	agent = "%s %s %s %s"%(mozilla, webkit, chrome, safari)
 	return version, {
-		"Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-		"Accept-Encoding":"gzip, deflate",
-		"Accept-Language":"ko-KR,ko;q=0.8,en-US;q=0.6,en;q=0.4",
-		"Cache-Control":"max-age=0",
-		"Connection":"keep-alive",
-		"Host":"",
-		"Upgrade-Insecure-Requests":"1",
-		"User-Agent":"Mozilla/%d.0 (Windows NT 6.1) AppleWebKit/%d.%d (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/%d.%d"%(version[0]//10, version[0], version[1], version[0], version[1])
-	}
+          "Accept":"text/html,application/xhtml+xml,application/xml;"+
+                   "q=0.9,image/webp,image/apng,*/*;q=0.8",
+          "Accept-Encoding":"gzip, deflate",
+          "Accept-Language":"ko-KR,ko;q=0.8,en-US;q=0.6,en;q=0.4",
+          "Cache-Control":"max-age=0",
+          "Connection":"keep-alive",
+          "Host":"",
+          "Upgrade-Insecure-Requests":"1",
+          "User-Agent":agent
+        }
 
-randomHeader = lambda :copy(__randomHeader()[1])
+randomHeader = lambda: copy(__randomHeader()[1])
 
-# path, referer, url
-# path, url = str, str
-# url = [("fileName", "url"), ...]
-# path = "files/%s/%s"%(escapeFilenames(name),escapeFilenames(chapterName))
 def multiDownload(path, referer, urls, interval=0.5, chunkSize=5):
+	"""
+	download several urls
+
+	urls structure must be changed
+	"""
+
 	headers = randomHeader()
 	headers["Referer"] = referer
 
@@ -67,31 +84,33 @@ def _downloadProcess(path, header, urls, interval):
 			print(path+"/"+i[0])
 		except HTTPError as e:
 			x = open("error", "a")
-			x.write(json.dumps({
-				"error":str(e),
-				"path":path,
-				"url":i[1]
-			}))
+			x.write(
+				json.dumps({
+					"error":str(e),
+					"path":path,
+					"url":i[1]
+				})
+			)
 			x.close()
 		time.sleep(interval)
 
 def escapeFilenames(value):
-# 	valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
-# 	filename = ''.join(c for c in s if c in valid_chars)
-# 	filename = filename.replace(' ','_') # I don't like spaces in filenames.
-# 	return filename
-# 	return value.replace("/", "\/")
-	import unicodedata, re
+	"""
+	escape file names for linux file system
+	"""
 	value = unicodedata.normalize('NFKD', value)#.encode('utf-8')
-	value = re.sub('[^\w\s-]', '', value).strip().lower()
-	value = re.sub('[-\s]+', '-', value)
+	value = re.sub(r'[^\w\s-]', '', value).strip().lower()
+	value = re.sub(r'[-\s]+', '-', value)
 
 	return value
 
 def compressFile(name, target, destination, removeOriginal=False):
+	"""
+	compress file
+	"""
 	try:
 		fileList = os.listdir(target)
-	except NotADirectoryError as e:
+	except NotADirectoryError:# as e:
 		return 0
 
 	fileName = "%s/%s.zip"%(destination, name)

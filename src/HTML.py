@@ -1,18 +1,27 @@
+"""
+HTML.py
+written by ariyn(himnowxz@gmail.com)
+
+this script parse html and create elements for each tags.
+"""
+from html.parser import HTMLParser
 from .Emmet import Emmet
 
-from html.parser import HTMLParser
-import re
-import sys
-
 class Element:
+	"""
+	class for html tag
+	each tag will be Element instance
+	"""
 	MaxRecursive = 2
-	def __init__(self, tag, attr = []):
+	def __init__(self, tag, attr=None):
+		if not attr:
+			attr = []
 		attr = [(str(i[0]), str(i[1])) for i in attr]
 
-		self.strAttr = [" = ".join(v) if type(v[1]) == str else " = ".join(" ".join(v[1])) for v in attr]
+		self.strAttr = [" = ".join(v) if isinstance(v[1]) == str else " = ".join(" ".join(v[1])) for v in attr]
 
-		self.tag, self.attrs = tag, attr
-		self.parsedAttrs = {i[0]:i[1] for i in self.attrs}
+		self.tag = tag
+		self.parsedAttrs = {i[0]:i[1] for i in attr}
 		self.id = self.parsedAttrs["id"] if "id" in self.parsedAttrs else None
 		self.classes = self.parsedAttrs["class"].split(" ") if "class" in self.parsedAttrs else []
 		# self.parsedAttrs["class"] = self.parsedAttrs["class"].split(" ")
@@ -21,24 +30,45 @@ class Element:
 		self.parent = None
 # 		all-body
 	def addChildren(self, child):
+		"""
+		add children to self
+		this parent-children concept is same to html's parent-children concept
+		"""
 		self.children.append(child)
 		child.parent = self
-		
+
 	def setData(self, data):
+		"""
+		set data of element
+		data means text inside of container
+
+		<e>lorem ipsum</e>       data:lorem ipsum
+		<e><f>lorem</f>ipsum</e> data:ipsum
+		"""
 		self.data += data.strip()
 		self.parsedAttrs["body"] = self.data
 
-	def getAttr(self, key, retVal = None, index=0):
+	def getAttr(self, key, retVal=None):
+		"""
+		REFACTORY!
+
+		get attributes
+		refactor this into __getattr__
+		"""
 		if key in self.parsedAttrs:
 			retVal = self.parsedAttrs[key]
 		return retVal
 
 	def __str__(self):
-		# print(self.attrs)
-		return "<%s %s>%s</%s>"%(self.tag, " ".join(self.strAttr), self.data.replace("\n", "\\n"), self.tag)
+		newData = self.data.replace("\n", "\\n")
+		return "<%s %s>%s</%s>"%(self.tag, " ".join(self.strAttr), newData, self.tag)
 
-	def printTree(self, depth = 0):
-		print("%s<%s %s>%s"%("\t"*depth, self.tag, " ".join(self.strAttr), self.data.replace("\n", "\\n")))
+	def printTree(self, depth=0):
+		"""
+		print tree structure with text
+		"""
+		newData = self.data.replace("\n", "\\n")
+		print("%s<%s %s>%s"%("\t"*depth, self.tag, " ".join(self.strAttr), newData))
 
 		for i in self.children:
 			i.printTree(depth+1)
@@ -46,7 +76,11 @@ class Element:
 		print("%s</%s>"%("\t"*depth, self.tag))
 
 class MyHTMLParser(HTMLParser):
-# 	tagFilterEXP = "(?P<tag>[a-zA-z0-9]+)(?:(?P<id>#[a-zA-z0-9_\-]+)|(?P<class>(?:\.[a-zA-z0-9_\-]+)*)|{(?P<capture>.+?)})"
+	"""
+	custom html parser
+	oldtagFilterEXP =
+	"(?P<tag>[a-zA-z0-9]+)(?:(?P<id>#[a-zA-z0-9_\-]+)|(?P<class>(?:\.[a-zA-z0-9_\-]+)*)|{(?P<capture>.+?)})"
+	"""
 	onelineTags = ["img", "br"]
 	def __init__(self):
 		super(MyHTMLParser, self).__init__()
@@ -59,42 +93,60 @@ class MyHTMLParser(HTMLParser):
 		self.emmetEngine = []
 		self.parseEncounter = 0
 
-	def handle_startendtag(self, tag, attrs):
-		self.handle_starttag(tag, attrs, oneline=True)
-		self.handle_endtag(tag, oneline=True)
-
-	def handle_starttag(self, tag, attrs, oneline=False):
+	def __handle_starttag__(self, tag, attrs, oneline=False):
 		e = Element(tag, attrs)
-		[i.Check(e) for i in self.emmetEngine]
-			
+		for i in self.emmetEngine:
+			i.Check(e)
+
 		self.parsingTags[-1].addChildren(e)
 		self.tags.append(e)
 		self.parsingTags.append(e)
-		
+
 		if tag in ["img", "br"] and not oneline:
 			self.handle_endtag(tag, oneline=True)
 
-
-	def handle_endtag(self, tag, oneline=False):
+	def __handle_endtag__(self, tag, oneline=False):
 		e = self.parsingTags[-1]
-		
-		[i.Check(e, endTag = True, oneline=oneline) for i in self.emmetEngine]
+		tag = tag
+
+		for i in self.emmetEngine:
+			i.Check(e, endTag=True, oneline=oneline)
 		self.parsingTags = self.parsingTags[:-1]
+
+	def handle_startendtag(self, tag, attrs):
+		self.__handle_starttag__(tag, attrs, oneline=True)
+		self.__handle_endtag__(tag, oneline=True)
+
+	def handle_starttag(self, tag, attrs):
+		self.__handle_starttag__(tag, attrs)
+
+	def handle_endtag(self, tag):
+		self.__handle_endtag__(tag)
 
 	def handle_data(self, data):
 		self.parsingTags[-1].setData(data)
 		self.parsingTags[0].setData(data)
 
-	def setFilter(self, filter, ignore=[]):
-		self.emmetEngine.append(Emmet(filter, ignore=ignore))
-		# self.emmetEngine[-1].printTransitions()
+	def setFilter(self, _filter, ignore=None):
+		"""
+		create filter for emmet
+		"""
+		if not ignore:
+			ignore = []
+		self.emmetEngine.append(Emmet(_filter, ignore=ignore))
 
 	def getDMLS(self):
-# 		for i in self.emmetEngine:
-# 			print(i.dataMappingList)
+		"""
+		parser DMLs which Data Mapping Lists
+		"""
 		dmls = [[{z[0]:z[1] for z in dml} for dml in i.dataMappingList] for i in self.emmetEngine]
-# 		print(dmls)
 		return dmls
 
 	def parse(self):
+		"""
+		wrapper of HTMLParser.feed
+		"""
 		self.feed(self.html)
+
+	def error(self, x):
+		pass

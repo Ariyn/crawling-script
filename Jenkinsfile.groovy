@@ -19,23 +19,18 @@ pipeline {
           }
         }
         steps {
-            sh 'pylint3 --rcfile=./pylint.cfg src/*>pylint.log'
             sh 'ls -al'
+            sh 'pylint3 --rcfile=./pylint.cfg --reports no src/*>pylint.log||exit 0'
             sh 'cat pylint.log'
-        }
-        post {
-          always {
             step([
               $class                     : 'WarningsPublisher',
               parserConfigurations       : [[
-                                                    parserName: 'PYLint',
-                                                    pattern   : 'pylint.log'
+                                              parserName: 'PYLint',
+                                              pattern   : 'pylint.log'
                                             ]],
-              unstableTotalAll           : '0',
-              healthy                    : 1,
-              usePreviousBuildAsReference: true
+              healthy                    : '10',
+              usePreviousBuildAsReference: false
             ])
-          }
         }
     }
   }
