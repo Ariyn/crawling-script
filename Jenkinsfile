@@ -19,7 +19,7 @@ pipeline {
           }
         }
         steps {
-            sh 'pylint3 --rcfile=./pylint.cfg src/test.py>pylint.log'
+            sh 'pylint3 --rcfile=./pylint.cfg src/*>*.pylint.log'
             sh 'cat pylint.log'
         }
         post {
@@ -28,7 +28,7 @@ pipeline {
               $class                     : 'WarningsPublisher',
               parserConfigurations       : [[
                                                     parserName: 'PYLint',
-                                                    pattern   : 'pylint.log'
+                                                    pattern   : '*.pylint.log'
                                             ]],
               unstableTotalAll           : '0',
               usePreviousBuildAsReference: true
