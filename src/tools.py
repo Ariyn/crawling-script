@@ -49,23 +49,14 @@ def multiDownload(path, referer, urls, interval=0.5, chunkSize=5):
 
 	headers = randomHeader()
 	headers["Referer"] = referer
-
-	# print("path", path)
-
-# 	try:
-# 		os.mkdir(path)
-# 	except FileNotFoundError as e:
-# 		print(e)
-
+	
 	processList = []
 	headers["Host"] = GetHost(urls[0][1])
 
 	newUrls = []
 	for i in range(0, len(urls), chunkSize):
-# 		url[:chunkSize]:
 		newUrls.append(urls[i:i+chunkSize])
 
-# 	print("here", newUrls)
 	for i in newUrls:
 		p = multiprocessing.Process(target=_downloadProcess, args=(path, headers, i, interval))
 		processList.append(p)

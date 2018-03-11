@@ -18,7 +18,10 @@ class Element:
 			attr = []
 		attr = [(str(i[0]), str(i[1])) for i in attr]
 
-		self.strAttr = [" = ".join(v) if isinstance(v[1]) == str else " = ".join(" ".join(v[1])) for v in attr]
+		self.strAttr = []
+		for v in attr:
+			x = " = ".join(v) if isinstance(v[1]) == str else " = ".join(" ".join(v[1]))
+			self.strAttr.append(x)
 
 		self.tag = tag
 		self.parsedAttrs = {i[0]:i[1] for i in attr}
@@ -78,8 +81,6 @@ class Element:
 class MyHTMLParser(HTMLParser):
 	"""
 	custom html parser
-	oldtagFilterEXP =
-	"(?P<tag>[a-zA-z0-9]+)(?:(?P<id>#[a-zA-z0-9_\-]+)|(?P<class>(?:\.[a-zA-z0-9_\-]+)*)|{(?P<capture>.+?)})"
 	"""
 	onelineTags = ["img", "br"]
 	def __init__(self):

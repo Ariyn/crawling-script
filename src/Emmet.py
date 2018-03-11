@@ -11,7 +11,7 @@ class State:
 
 	def Transition(self, element, ignore=[]):
 		changed, state = False, self
-		
+
 		for i in self.transitions:
 			if (i[0] == element.tag and i[1].Match(element)) or i[0] in ignore:
 				changed, state = True, i[1]
@@ -20,7 +20,7 @@ class State:
 		return changed, state
 
 class EmmetNode(State):
-	repeatLambda = lambda x:x if not x else x.groupdict()
+	repeatLambda = lambda x: x if not x else x.groupdict()
 	dataTokenEXP = "(?:(?:([a-zA-z0-9-_]+)(?:\s*:=\s*([a-zA-z0-9-_]+))?)\s*,?\s*)"
 	tagFilterEXP = "(?P<tag>\w+)(?:\[(?P<condition>(.+?:.+?\s*)+)\]|(?P<id>#(\w|\d|-|_)+)|(?P<name>\*(\w|\d|-|_)+)|(?P<class>(?:\.(\w|\d|-|_)+)*)|{(?P<capture>.+?)})"
 
@@ -52,7 +52,7 @@ class EmmetNode(State):
 	def __str__(self):
 		return self.pattern
 
-	def Match(self, element, remove=False, ignore = []):
+	def Match(self, element, remove=False, ignore=[]):
 		if self.root:
 			return False
 
