@@ -20,7 +20,7 @@ class Element:
 
 		self.strAttr = []
 		for v in attr:
-			x = " = ".join(v) if isinstance(v[1]) == str else " = ".join(" ".join(v[1]))
+			x = " = ".join(v) if isinstance(v[1], str) else " = ".join(" ".join(v[1]))
 			self.strAttr.append(x)
 
 		self.tag = tag
@@ -31,6 +31,7 @@ class Element:
 		# print(self.parsedAttrs)
 		self.data, self.children = "", []
 		self.parent = None
+		self.attrs = attr
 # 		all-body
 	def addChildren(self, child):
 		"""
@@ -104,7 +105,7 @@ class MyHTMLParser(HTMLParser):
 		self.parsingTags.append(e)
 
 		if tag in ["img", "br"] and not oneline:
-			self.handle_endtag(tag, oneline=True)
+			self.__handle_endtag__(tag, oneline=True)
 
 	def __handle_endtag__(self, tag, oneline=False):
 		e = self.parsingTags[-1]

@@ -10,7 +10,8 @@ from gzip import decompress
 from random import randrange
 
 from .HTML import MyHTMLParser
-from .tools import GetHost, randomHeader, Log
+from .tools import GetHost, randomHeader, Log, lorem
+from .response import Response
 
 headers = randomHeader()
 def crawl(f):
@@ -52,6 +53,10 @@ def crawl(f):
 		else:
 			headers["Host"] = GetHost(url)
 
+		if "cookie" in kwargs:
+			headers["Cookie"] = kwargs["cookie"]
+			del kwargs["cookie"]
+
 		if "data" in kwargs:
 			data = urlencode(kwargs["data"]).encode("utf-8")
 			del kwargs["data"]
@@ -65,7 +70,6 @@ def crawl(f):
 			save = kwargs["save"]
 			del kwargs["save"]
 
-
 		if "://" not in url:
 			sUrl = "http://"+url
 		sUrl = url.split("://")
@@ -76,66 +80,42 @@ def crawl(f):
 		with Log() as log:
 			try:
 				res = urlopen(req)
-				html = res.read()
-
-				if res.getheader("Content-Encoding") == "gzip":
-					html = decompress(html)
-
-				html = html.decode("utf-8")
-
 				log.info("crawling succeed", extra={
 					"url":url,
 					"code":str(res.getcode()),
-					"reason":""
+					"reason":"",
+					"headers":""
 				})
 			except URLError as e:
-				log.error('crawling error', extra = {
-					"code":str(e.code),
-					"reason":e.reason,
-					"url":url
-				})
-				return False
-
-
+				res = e
+				data = {
+					"code":str(res.code),
+					"reason":res.reason,
+					"url":url,
+					"headers":str(res.headers)
+				}
+				log.error('crawling error', extra = data)
+# 				retVal = lambda res:res
+		retVal = lambda res: f(res, *args, **kwargs)
+		response = Response(res)
 		if save:
-			open(save, "w").write(html)
-		return f(html, *args, **kwargs)
+			open(save, "w").write(res.html)
+		return retVal(response)
 
 	return _
-
-def crawlTest(f):
-	import inspect
-
-	spec = inspect.signature(f)
-# 	args = spec.parameters.items()
-
-	def _(file, *args, **kwargs):
-		if "referer" in kwargs and "referer" not in args:
-			del kwargs["referer"]
-
-		if "host" in kwargs and "host" not in args:
-			del kwargs["host"]
-		print(file)
-		if hasattr(file, "read"):
-			html = file.read()
-		else:
-			html = open(file, "r").read()
-		return f(html, *args, **kwargs)
-
-	return _
-
 
 def parser(src, ignore=[]):
 	def _(f):
-		def __(html, *args, **kwargs):
-			if type(html) == str:
+		def __(response, *args, **kwargs):
+			if type(response) == Response:
 				d = MyHTMLParser()
-				d.html = html
-			elif type(html) == MyHTMLParser:
-				d = html
+				d.html = response.html
+				d.response = response
+			elif type(response) == MyHTMLParser:
+				d = response
 
 			d.setFilter(src, ignore)
-			if f.__name__ != "__":
+			if f.__name__ != "__" and d.response.success:
 				d.parse()
 			return f(d, *args, **kwargs)
 

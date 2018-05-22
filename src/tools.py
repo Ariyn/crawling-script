@@ -16,11 +16,13 @@ import multiprocessing
 import os
 import time
 import logging
+from logging.handlers import RotatingFileHandler, SysLogHandler
 
 
 GetHost = lambda url: url.replace("http://", "").replace("https://", "").split("/")[0]
+lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 
-def __randomHeader__():
+def __randomHeader__(host=''):
 	version = (randrange(40, 55, 1), randrange(0, 60, 1), randrange(2500, 3500))
 	mozilla = "Mozilla/%d.0 (Windows NT 6.1)"%(version[0]//10)
 	webkit = "AppleWebKit/%d.%d (KHTML, like Gecko)"%(version[0], version[1])
@@ -35,12 +37,12 @@ def __randomHeader__():
           "Accept-Language":"ko-KR,ko;q=0.8,en-US;q=0.6,en;q=0.4",
           "Cache-Control":"max-age=0",
           "Connection":"keep-alive",
-          "Host":"",
+          "Host":host,
           "Upgrade-Insecure-Requests":"1",
           "User-Agent":agent
         }
 
-randomHeader = lambda: copy(__randomHeader__()[1])
+randomHeader = lambda host='': copy(__randomHeader__(host)[1])
 
 def multiDownload(path, referer, urls, interval=0.5, chunkSize=5):
 	"""
@@ -58,11 +60,12 @@ def multiDownload(path, referer, urls, interval=0.5, chunkSize=5):
 	newUrls = []
 	for i in range(0, len(urls), chunkSize):
 		newUrls.append(urls[i:i+chunkSize])
-
-	for i,v in enumerate(newUrls):
-		p = multiprocessing.Process(target=__downloadProcess__, args=(path, headers, v, interval,i))
-		processList.append(p)
-		p.start()
+	
+	with Log() as log:
+		for i,v in enumerate(newUrls):
+			p = multiprocessing.Process(target=__downloadProcess__, args=(path, headers, v, interval, i, log))
+			processList.append(p)
+			p.start()
 
 	for p in processList:
 		p.join()
@@ -126,33 +129,43 @@ def compressFile(name, target, destination, removeOriginal=False):
 	return fileName
 
 class Log:
-	file = NamedTemporaryFile(suffix=".log", prefix="crawl-", delete=False)
+	debugFile = NamedTemporaryFile(suffix=".log", prefix="crawl-", delete=False)
+	path = "./log/crawl.log"
 	debug = False
+	format = "%(asctime)-15s %(url)s %(message)s %(code)-3s\n\t%(reason)s\n"
+	
 	def __init__(self, name="crawler", path=None, format=None, debug=False):
 		debug = debug or self.debug
 		if format is None:
-			format = "\n" if debug else ""
-			format += "%(asctime)-15s %(url)s %(message)s %(code)-3s\n\t%(reason)s"
+			format = Log.format
+
 		self.log = logging.getLogger(name)
+		if not hasattr(self.log, "stdFileHandler"):
+			setattr(self.log, "stdFileHandler", False)
+			setattr(self.log, "stdStreamHandler", False)
+			
 		self.log.setLevel(logging.INFO if not debug else logging.DEBUG)
 		self.formatter = logging.Formatter(format)
 		
-		self.path = path
-		if path is None:
-			self.path = self.file.name
-			
-		fileHandler = logging.FileHandler(self.path)
-		fileHandler.setFormatter(self.formatter)
-		self.log.addHandler(fileHandler)
+		if path is not None:
+			self.path = path	
+# 		if debug:
+# 			self.path = self.debugFile.name
+		
+		if not self.log.stdFileHandler:
+			fileHandler = RotatingFileHandler(self.path, maxBytes=1024*1024)
+			fileHandler.setFormatter(self.formatter)
+			self.log.addHandler(fileHandler)
+			self.log.stdFileHandler = True
 
-		if debug:
+		if debug and not self.log.stdStreamHandler:
 			streamHandler = logging.StreamHandler()
 			streamHandler.setFormatter(self.formatter)
 			self.log.addHandler(streamHandler)
+			self.log.stdStreamHandler = True
 
 	def __enter__(self):
 		return self.log
 	
 	def __exit__(self, exc_type, exc_value, traceback):
 		pass
-	

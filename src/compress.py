@@ -1,11 +1,19 @@
-from zipfile import ZipFile
-import boto3
+"""
+this module works for compress files
+this module will be consumed to other module.
+"""
 import os
+import re
+from zipfile import ZipFile
 
 def compressFile(name, path, removeOriginal=False):
+	"""
+	def collect
+	collect files to destination folder
+	"""
 	try:
 		fileList = os.listdir(path)
-	except NotADirectoryError as e:
+	except NotADirectoryError:
 		return 0
 
 	fileName = "files/zip/%s.zip"%(name)
@@ -25,7 +33,10 @@ def compressFile(name, path, removeOriginal=False):
 	return fileName
 
 def collect():
-	import re
+	"""
+	def collect
+	collect files to destination folder
+	"""
 	comics = []
 	exp = re.compile(r"(.+?) ?([0-9]+(?:화|권))")
 

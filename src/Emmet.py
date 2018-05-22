@@ -55,7 +55,7 @@ class EmmetNode(State):
 	def Match(self, element, remove=False, ignore=[]):
 		if self.root:
 			return False
-
+		
 		tag, attrs = element.tag, element.attrs
 		filtered = False
 		classes = set(element.classes)
