@@ -1,103 +1,161 @@
 import re
+import copy
 
-class State:
-	def __init__(self):
-		self.transitions = []
-	def Match(self, element):
-		raise NotImplemented
-	def addTransition(self, target):
-		self.transitions.append((target.tag, target))
+tagExp = re.compile(r"^([A-Za-z0-9-_]+)(#[A-Za-z0-9-_]+)?(\.[A-Za-z0-9-_]+)*")
+conditionExp = re.compile(r"^\[\W*((?:[A-Za-z0-9-_]+\W*:=\W*[A-Za-z0-9-_]+\W*,?)+)\]")
+captureExp = re.compile(r"^\{\W*((?:[A-Za-z0-9-_]+\W*:=\W*[A-Za-z0-9-_]+\W*,?)+)\}")
+operatorExp = re.compile(r"^(\+|>|\*)")
+bracketExp = (re.compile(r"^(\()"), re.compile(r"^(\))"))
 
-	def Transition(self, element, ignore=[]):
-		changed, state = False, self
+allocationExp = re.compile(r"([A-Za-z0-9-_]+)\W*:=\W*((?:\w|-|_)+)")
 
-		for i in self.transitions:
-			if (i[0] == element.tag and i[1].Match(element)) or i[0] in ignore:
-				changed, state = True, i[1]
-				break
+idExp = re.compile(r"#([A-Za-z0-9-_]+)")
+classExp = re.compile(r"\.([A-Za-z0-9-_]+)")
 
-		return changed, state
+exps = [bracketExp[0], tagExp, conditionExp, captureExp, operatorExp, bracketExp[1]]
 
-class EmmetNode(State):
-	repeatLambda = lambda x: x if not x else x.groupdict()
-	dataTokenEXP = "(?:(?:([a-zA-z0-9-_]+)(?:\s*:=\s*([a-zA-z0-9-_]+))?)\s*,?\s*)"
-	tagFilterEXP = "(?P<tag>\w+)(?:\[(?P<condition>(.+?:.+?\s*)+)\]|(?P<id>#(\w|\d|-|_)+)|(?P<name>\*(\w|\d|-|_)+)|(?P<class>(?:\.(\w|\d|-|_)+)*)|{(?P<capture>.+?)})"
-	fcTokens = ["(", ")", "+", ">", "^", "**"]
-	fcTokenEXP = "(\(|\)|\+|\>|\^|\*\*)"
-	fcDataTokenEXP = "\{(.+?)\}"
-	
-	def __init__(self, pattern=None, root=False):
-		super(EmmetNode, self).__init__()
+class Node:
+	def __init__(self, raw, type="oper"):
+		self.raw = raw
+		self.type = type
+		self.condition, self.captures = [], []
 
-		self.root = root
-		if root:
-			pattern = "root"
-		self.pattern, pattern = pattern, pattern.strip()
-
-		f = re.search(self.tagFilterEXP, pattern)
-		f = f.groupdict()
-
-		self.f, self.tag = f, f["tag"]
-		self.classes = f["class"].split(".")[1:] if f["class"] else []
-		self.ids = f["id"].split("#")[1:] if f["id"] else []
-		self.names = f["name"].split("*")[1:] if f["name"] else []
-		self.conditions = [i.split(":") for i in f["condition"].split(" ")] if f["condition"] else []
-# 		if self.conditions:
-# 			print("self.conditions = ",self.conditions)
-
-		data = re.search(self.fcDataTokenEXP, pattern)
-		data, hasData = data.group(0) if data else "", True if data else False
-
-		self.dataMapping = re.findall(self.dataTokenEXP, data)
-		self.children, self.sibling = [], []
+	def __repr__(self):
+		return self.raw
 
 	def __str__(self):
-		return self.pattern
+		return self.__repr__()
 
-	def Match(self, element, remove=False, ignore=[]):
-		if self.root:
+class EmmetNode(Node):
+	def __init__(self, raw, type="node", isRoot=False):
+		super().__init__(raw, type)
+		idString, classString = idExp.search(raw), classExp.findall(raw)
+
+		self.id = idString.group(1) if idString else ""
+		self.classes = classString
+		self.tag = re.search(r"^([A-Za-z0-9-_]+)", self.raw).group()
+
+		self.isRoot = isRoot
+		self.children = []
+		self.condition, self.captures = [], []
+		self.__parent = None
+		self.__level = 0
+
+	def __repr__(self):
+		cond = ", ".join(["%s:=%s"%(i) for i in self.condition])
+		capt = ", ".join(["%s:=%s"%(i) for i in self.captures])
+		return "<{TagName}{IdName}{ClassName}{Condition}>{Capture}".format(
+			TagName = self.tag,
+			IdName = ' id="%s"'%self.id if self.id else "",
+			ClassName = ' class="%s"'%" ".join(self.classes) if self.classes else "",
+			Condition=" [%s]"%cond if cond else "",
+			Capture=" {%s}"%capt if capt else ""
+		)
+	
+	@property
+	def parent(self):
+		return self.__parent
+	@parent.setter
+	def parent(self, parent):
+		self.__parent = parent
+		self.__level = parent.level+1
+
+	@property
+	def level(self):
+		return self.__level
+	
+	@property
+	def sibling(self):
+		return self.__parent.children if self.__parent else None
+	
+	def travel(self, index=0):
+		print("%s %s"%("  "*index, self.__repr__()))
+		for i in self.children:
+			i.travel(index=index+1)
+
+	def capture(self, e):
+		x = [(i[0], e.parsedAttrs[i[1]]) for i in self.captures if i[1] in e.parsedAttrs]
+	
+	def Match(self, element, **kwargs):
+		self.match(element)
+	def match(self, element):
+		if self.isRoot:
 			return False
-		
+
 		tag, attrs = element.tag, element.attrs
 		filtered = False
 		classes = set(element.classes)
-		# classes = set([i[1] for i in attrs if i[0] == "class"][0])
-		ids = [i[1].strip() for i in attrs if i[0] == "id"]
-		names = [i[1].strip() for i in attrs if i[0] == "name"]
+		id = element.id
+
 		conditions = {
-			"id":ids,
-			"name":names,
+			"id":id,
 			"class":classes,
 			"body":element.data
 		}
 
 		if tag == self.tag:
 			filtered = True
-
-			# print("matching", element, filtered, self.classes, classes)
-			cls = classes | set(self.classes)
-			if cls != classes:
-				filtered = False
-
-			for i in self.ids:
-				if i not in ids:
-					filtered = False
-					break
-			
-			for i in self.names:
-				if i not in names:
-					filtered = False
-					break
-					
-			for i in self.conditions:
-				if i[1] != conditions[i[0]]:
-					filtered=False
-					break
-# 				else:
-# 					print("here", i[1], conditions[i[0]])
-			
-		if self.tag in ignore:
-# 			print(self.tag)
-			filtered = True
 	
+		if (classes|set(self.classes)) == classes:
+			filtered = filtered & True
+		else:
+			filtered = False
+
+		if self.id == id:
+			filtered = filtered & True
+		else:
+			filtered = False
+
 		return filtered
+
+def splitToken(string):
+	cpStr = copy.copy(string)
+	tokens = []
+	index = 0
+	while len(cpStr) != 0 and index < 10:
+		index += 1
+		for exp in exps:
+			s = exp.search(cpStr)
+			if s:
+				result = s.group(0)
+				tokens.append((s, exp))
+				cpStr = cpStr[len(s.group(0)):].lstrip()
+				continue
+
+	return tokens
+
+def parse(tokens):
+	root = EmmetNode("root", isRoot=True)
+	stack = [root, Node(">")]
+	for result, exp in tokens:
+		resultString = result.group()
+
+		if exp == tagExp:
+			stack.append(EmmetNode(resultString))
+		elif exp == operatorExp or exp in bracketExp:
+			stack.append(Node(resultString))
+		elif exp == conditionExp:
+			stack[-1].condition += allocationExp.findall(resultString)
+		elif exp == captureExp:
+			stack[-1].captures += allocationExp.findall(resultString)
+
+		if stack[-1].type == "oper":
+			oper = stack[-1]
+			if oper.raw == ")":
+				for i, v in enumerate(stack[::-1]):
+					if v.type == "oper" and v.raw == "(":
+						stack = stack[:-i-1]+[stack[-i]]
+						break
+		if stack[-2].type == "oper" and stack[-1].type == "node":
+			oper = stack[-2]
+			if oper.raw == ">":
+				stack[-3].children.append(stack[-1])
+				stack[-1].parent = stack[-3]
+				stack = stack[:-2]+stack[-1:]
+			elif oper.raw == "+":
+				stack[-3].parent.children.append(stack[-1])
+				stack = stack[:-2]+stack[-1:]
+			elif oper.raw == "*":
+				pass
+	
+	return root
