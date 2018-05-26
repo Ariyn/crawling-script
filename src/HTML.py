@@ -27,8 +27,6 @@ class Element:
 		self.parsedAttrs = {i[0]:i[1] for i in attr}
 		self.id = self.parsedAttrs["id"] if "id" in self.parsedAttrs else None
 		self.classes = self.parsedAttrs["class"].split(" ") if "class" in self.parsedAttrs else []
-		# self.parsedAttrs["class"] = self.parsedAttrs["class"].split(" ")
-		# print(self.parsedAttrs)
 		self.data, self.children = "", []
 		self.parent = None
 		self.attrs = attr
