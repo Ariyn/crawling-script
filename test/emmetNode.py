@@ -6,7 +6,7 @@ import os
 import logging
 
 import src.EmmetNode as nsp
-import src.Emmet as Emmet
+from src.Emmet import Emmet
 from src.HTML import Element, MyHTMLParser
 from src.tools import Log
 
@@ -100,15 +100,86 @@ class Tester(unittest.TestCase):
 		if root.match(e):
 			x = root.capture(e)
 			print(x)
-			
-# 	@mock.patch('src.Emmet.EmmetNode', nsp.EmmetNode)
-	def test_mocking_emmet_node(self):
-		e = Emmet(self.scripts[6])
-# 		e.printTree()
-	
-	def test_emmet_recursive_traversal(self):
+
+	def test_newStyle_node_iteration(self):
 		e = Emmet(self.scripts[3])
-		d = e.traversal()
-		while d:
-			d = e.traversal()
-			print(d)
+		back = False
+		strs = []
+		for i in e:
+			strs.append(i.tag)
+			if i.tag == "ul" and not back:
+				e.index -= 1
+				back = True
+		self.assertEqual(" ".join(strs), "tag1 ul ul li span li span")
+
+	def test_emmet_newStyle_check(self):
+		elements = [Element("tag1"), Element("ul"), Element("li"), Element("span",[
+			("body","testestset")
+		]),Element("li"), Element("span",[
+			("body","testestset")
+		])]
+		emmetEngine = Emmet(self.scripts[3])
+		for ele in elements:
+			x = emmetEngine.check(ele)
+			self.assertTrue(x)
+	
+	def test_emmet_newStyle_check_right_elements(self):
+		e = [Element("tag1"), Element("ul"), Element("li"), Element("span",[
+			("body","testTitle")
+		]),Element("li"), Element("span",[
+			("body","testAuthor")
+		])]
+		
+		operation = [
+			(e[0], False),
+			(e[1], False),
+			(e[2], False),
+			(e[3], False),
+			(e[3], True),
+			(e[2], True),
+			(e[4], False),
+			(e[5], False),
+			(e[5], True),
+			(e[4], True),
+			(e[1], True),
+			(e[0], True)
+	]
+		emmetEngine = Emmet(self.scripts[3])
+		for i in range(2):
+			for element, endTag in operation:
+				x = emmetEngine.check(element, endTag=endTag)
+# 				print(element, x)
+		self.assertEqual({"title":"testTitle", "author":"testAuthor"}, emmetEngine.captures[0])
+
+	def test_emmet_newStyle_check_wrong_elements(self):
+		"""
+		if emmetEngine failed to check completely (= match all elements until end)
+			emmetEngine should not save currentCapture
+			= emmetEngine should reset with succeed =False
+		"""
+		e = [Element("tag1"), Element("ul"), Element("li"), Element("span",[
+			("body","testTitle")
+		]),Element("li2"), Element("span",[
+			("body","testAuthor")
+		])]
+		
+		operation = [
+			(e[0], False),
+			(e[1], False),
+			(e[2], False),
+			(e[3], False),
+			(e[3], True),
+			(e[2], True),
+			(e[4], False),
+			(e[5], False),
+			(e[5], True),
+			(e[4], True),
+			(e[1], True),
+			(e[0], True)
+	]
+		emmetEngine = Emmet(self.scripts[3])
+		for i in range(2):
+			for element, endTag in operation:
+				x = emmetEngine.check(element, endTag=endTag)
+# 				print(element, x)
+		self.assertEqual({}, emmetEngine.captures[0])

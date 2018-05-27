@@ -31,7 +31,7 @@ class EmmetNode(Node):
 		super().__init__(raw, type)
 		idString, classString = idExp.search(raw), classExp.findall(raw)
 
-		self.id = idString.group(1) if idString else ""
+		self.id = idString.group(1) if idString else None
 		self.classes = classString
 		self.tag = re.search(r"^([A-Za-z0-9-_]+)", self.raw).group()
 
@@ -68,16 +68,18 @@ class EmmetNode(Node):
 	def sibling(self):
 		return self.__parent.children if self.__parent else None
 	
-	def travel(self, index=0):
-		print("%s %s"%("  "*index, self.__repr__()))
+	def travel(self, index=0, format=lambda index, x:"%s %s\n"%("  "*index, x.__repr__())):
+		x = format(index, self)
 		for i in self.children:
-			i.travel(index=index+1)
-
+			x += i.travel(index=index+1, format=format)
+		
+		return x
+	
 	def capture(self, e):
 		x = [(i[0], e.parsedAttrs[i[1]]) for i in self.captures if i[1] in e.parsedAttrs]
-	
+
 	def Match(self, element, **kwargs):
-		self.match(element)
+		return self.match(element)
 	def match(self, element):
 		if self.isRoot:
 			return False
@@ -95,7 +97,7 @@ class EmmetNode(Node):
 
 		if tag == self.tag:
 			filtered = True
-	
+
 		if (classes|set(self.classes)) == classes:
 			filtered = filtered & True
 		else:
