@@ -27,3 +27,7 @@ class Response:
 	def __getattr__(self, key):
 		if key not in self.keys:
 			return self.response.__getattribute__(key)
+		
+	@staticmethod
+	def unzip(file, encoding="utf-8"):
+		return gzip.GzipFile(fileobj=file).read().decode(encoding)

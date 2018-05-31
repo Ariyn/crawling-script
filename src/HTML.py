@@ -139,7 +139,7 @@ class MyHTMLParser(HTMLParser):
 		"""
 		parser DMLs which Data Mapping Lists
 		"""
-		dmls = [[{z[0]:z[1] for z in dml} for dml in i.dataMappingList] for i in self.emmetEngine]
+		dmls = [i.captures for i in self.emmetEngine]
 		return dmls
 
 	def parse(self):

@@ -23,6 +23,11 @@ class Tester(unittest.TestCase):
 	html = [
 		"<div id='test'>"
 	]
+	elements = [Element("tag1"), Element("ul"), Element("li"), Element("span",[
+		("body","testTitle")
+	]),Element("li"), Element("span",[
+		("body","testAuthor")
+	])]
 	@staticmethod
 	def setUpClass():
 		format = "%(asctime)-15s %(message)s %(datas)s"
@@ -111,7 +116,8 @@ class Tester(unittest.TestCase):
 				e.index -= 1
 				back = True
 		self.assertEqual(" ".join(strs), "tag1 ul ul li span li span")
-
+	
+	@unittest.skip("for test")
 	def test_emmet_newStyle_check(self):
 		elements = [Element("tag1"), Element("ul"), Element("li"), Element("span",[
 			("body","testestset")
@@ -123,13 +129,9 @@ class Tester(unittest.TestCase):
 			x = emmetEngine.check(ele)
 			self.assertTrue(x)
 	
+	@unittest.skip("for test")
 	def test_emmet_newStyle_check_right_elements(self):
-		e = [Element("tag1"), Element("ul"), Element("li"), Element("span",[
-			("body","testTitle")
-		]),Element("li"), Element("span",[
-			("body","testAuthor")
-		])]
-		
+		e = self.elements		
 		operation = [
 			(e[0], False),
 			(e[1], False),
@@ -148,22 +150,39 @@ class Tester(unittest.TestCase):
 		for i in range(2):
 			for element, endTag in operation:
 				x = emmetEngine.check(element, endTag=endTag)
-# 				print(element, x)
 		self.assertEqual({"title":"testTitle", "author":"testAuthor"}, emmetEngine.captures[0])
-
+	
+	@unittest.skip("for test")
 	def test_emmet_newStyle_check_wrong_elements(self):
-		"""
-		if emmetEngine failed to check completely (= match all elements until end)
-			emmetEngine should not save currentCapture
-			= emmetEngine should reset with succeed =False
-		"""
-		e = [Element("tag1"), Element("ul"), Element("li"), Element("span",[
-			("body","testTitle")
-		]),Element("li2"), Element("span",[
-			("body","testAuthor")
-		])]
-		
+		e = self.elements
+		wrongElement = Element("li2")
 		operation = [
+			(e[0], False),
+			(e[1], False),
+			(e[2], False),
+			(e[3], False),
+			(e[3], True),
+			(e[2], True),
+			(wrongElement, False),
+			(e[5], False),
+			(e[5], True),
+			(wrongElement, True),
+			(e[1], True),
+			(e[0], True)
+	]
+		emmetEngine = Emmet(self.scripts[3])
+		for i in range(2):
+			for element, endTag in operation:
+				x = emmetEngine.check(element, endTag=endTag)
+
+		self.assertEqual([], emmetEngine.captures)
+	
+	@unittest.skip("for test")
+	def test_emmet_newStyle_check_right_but_many_parent_elements(self):
+		e = self.elements
+		wrongElement = Element("li2")
+		operation = [
+			(wrongElement, False),
 			(e[0], False),
 			(e[1], False),
 			(e[2], False),
@@ -175,11 +194,82 @@ class Tester(unittest.TestCase):
 			(e[5], True),
 			(e[4], True),
 			(e[1], True),
-			(e[0], True)
+			(e[0], True),
+			(wrongElement, True)
 	]
 		emmetEngine = Emmet(self.scripts[3])
 		for i in range(2):
 			for element, endTag in operation:
 				x = emmetEngine.check(element, endTag=endTag)
-# 				print(element, x)
-		self.assertEqual({}, emmetEngine.captures[0])
+
+		self.assertEqual({"title":"testTitle", "author":"testAuthor"}, emmetEngine.captures[0])
+		
+	def test_emmet_newStyle_check_right_but_wrong_siblings_elements(self):
+		print("\ntest_emmet_newStyle_check_right_but_wrong_siblings_elements")
+		e = self.elements
+		wrongElement = Element("li2")
+		operation = [
+			(e[0], False),
+			(e[1], False),
+			(e[2], False),
+			(e[3], False),
+			(e[3], True),
+			(e[2], True),
+			(wrongElement, False),
+			(wrongElement, True),
+			(e[4], False),
+			(e[5], False),
+			(e[5], True),
+			(e[4], True),
+			(e[1], True),
+			(e[0], True)
+		]
+		emmetEngine = Emmet(self.scripts[3])
+		indent = 0
+		for i in operation:
+			print(("  "*indent+"<%s>" if not i[1] else "  "*(indent-1)+"</%s>")%i[0].tag)
+			if i[1]:
+				indent -= 1
+			else:
+				indent += 1
+
+		for element, endTag in operation:
+			x = emmetEngine.check(element, endTag=endTag)
+
+		self.assertEqual({"title":"testTitle", "author":"testAuthor"}, emmetEngine.captures[0])
+		
+	@unittest.skip("for test")
+	def test_emmet_newStyle_check_just_wrong_elements(self):
+		print("\ntest_emmet_newStyle_check_just_wrong_elements")
+		e = self.elements
+		wrongElement = Element("li2")
+		operation = [
+			(e[0], False),
+			(e[1], False),
+			(e[2], False),
+			(e[3], False),
+			(e[3], True),
+			(e[2], True),
+			(e[4], False),
+			(e[5], False),
+			(wrongElement, False),
+			(wrongElement, True),
+			(e[5], True),
+			(e[4], True),
+			(e[1], True),
+			(e[0], True)
+		]
+		emmetEngine = Emmet(self.scripts[3])
+		indent = 0
+		for i in operation:
+			print(("  "*indent+"<%s>" if not i[1] else "  "*(indent-1)+"</%s>")%i[0].tag)
+			if i[1]:
+				indent -= 1
+			else:
+				indent += 1
+
+		for element, endTag in operation:
+			x = emmetEngine.check(element, endTag=endTag)
+
+		self.assertEqual([], emmetEngine.captures)
+	

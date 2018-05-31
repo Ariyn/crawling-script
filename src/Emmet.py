@@ -18,6 +18,11 @@ class Emmet:
 		
 		self.reset()
 		self.captures = []
+		
+	def __repr__(self):
+		return self.__str__()
+	def __str__(self):
+		return "<%s>"%self.scripts
 
 	def printTree(self, root=None, index=0):
 		if not root:
@@ -46,36 +51,37 @@ class Emmet:
 				self.elementHistory.pop(-1)
 
 			if not self.filterHistory:
-				self.reset()
+				self.reset(succeed=self.currentNodeFiltered)
 			else:
 				self.currentNode = self.filterHistory[-1]
 		else:
-			"""
-			this transition could be changed to yield tree traversal.
-			when interpreter run this line
-			next tree traversal goes on one by one.
-			but should i remove transition concept??
-			it could be usefull for complex scripting.
-			but it's not orthogonal method.
-			"""
-			if not self.currentNodeFiltered:
+			if not self.currentNodeFiltered and self.parentNodeFiltered:
 				return False
 			try:
 				cn = self.traversal()
 				filtered = cn.Match(element)
+				print(element, filtered, cn)
 				if filtered:
 					self.currentNodeFiltered = True
+					self.parentNodeFiltered = True
 					self.currentNode = cn
 					self.filterHistory.append(self.currentNode)
 					self.elementHistory.append(element)
 				else:
 					pass
+					print("not passed filtered")
+					print(element, filtered, cn)
 					self.currentNodeFiltered = False
-# 					self.reverseTraversal()
+					self.reverseTraversal()
 			except StopIteration:
 				"""
 				this means finally searching done to the end.
 				"""
+				print("stop iteration")
+				print(self.nodes[-1], element)
+				print(self.currentNodeFiltered, self.parentNodeFiltered)
+				print(self.filterHistory)
+				self.reset()
 				pass
 		return filtered
 
@@ -95,15 +101,18 @@ class Emmet:
 	def reverseTraversal(self):
 		self.index -= 1
 
-	def reset(self, succeed=True):
+	def reset(self, succeed=False):
+# 		print("reset!")
 		self.filterHistory = []
 		self.elementHistory = []
 		self.currentNode = self.root
 		self.index = 0
 		if succeed:
+# 			print('succeed!', self.currentCapture)
 			self.captures.append(copy(self.currentCapture))
 		self.currentCapture = {}
 		self.currentNodeFiltered = True
+		self.parentNodefiltered = False
 
 	def printTransitions(self):
 		print(self.root, " ".join(["(%s %s)"%(z[0], str(z[1])) for z in self.root.transitions]))
