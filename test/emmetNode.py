@@ -18,7 +18,9 @@ class Tester(unittest.TestCase):
 		"tag1>ul>(li>span[nth-sibling:=2]{title:= body})+(li>span[nth-sibling:=2]{author:=body})",
 		"div>ul>(li[test:=1]>span)+(li[test:=2]>span)>sdf",
 		"div#test.test1.test2{map:=data-map, list:=data-list}",
-		"div#test>span{title:=body}"
+		"div#test>span{title:=body}",
+		"t1>(t2>t3>t4+t5)+(t3>t4+t5)",
+		"t1[attr-index:=0]>(t3>t4)+(t3>t4>t5)",
 	]
 	html = [
 		"<div id='test'>"
@@ -203,7 +205,8 @@ class Tester(unittest.TestCase):
 				x = emmetEngine.check(element, endTag=endTag)
 
 		self.assertEqual({"title":"testTitle", "author":"testAuthor"}, emmetEngine.captures[0])
-		
+	
+	@unittest.skip("for test")
 	def test_emmet_newStyle_check_right_but_wrong_siblings_elements(self):
 		print("\ntest_emmet_newStyle_check_right_but_wrong_siblings_elements")
 		e = self.elements
@@ -273,3 +276,45 @@ class Tester(unittest.TestCase):
 
 		self.assertEqual([], emmetEngine.captures)
 	
+	def test_tree_list_maker(self):
+		emmetEngine = Emmet(self.scripts[7])
+		self.assertTrue(4 in emmetEngine.treeDict)
+		
+	def test_traverse_tree(self):
+		emmetEngine = Emmet(self.scripts[7])
+		x = [emmetEngine.traverseTree().tag for i in range(8)]
+		
+		self.assertEqual(",".join(x), "t1,t2,t3,t4,t5,t3,t4,t5")
+		
+	def test_traverse_possible_list(self):
+		emmetEngine = Emmet(self.scripts[7])
+		emmetEngine.traverseTree()
+		emmetEngine.traverseTree()
+		emmetEngine.traverseTree()
+		
+		self.assertEqual(",".join([i.tag for i in emmetEngine.possibleList]), "t3,t4,t5")
+		
+	def test_check2(self):
+		emmetEngine = Emmet(self.scripts[8])
+		print(emmetEngine.root.children)
+		tags = ["t1", "t2", "t3", "t4", "t5", "t3", "t4", "t5"]
+		e = [Element(t, attr=[("attr-index", index)]) for index, t in enumerate(tags)]
+
+		emmetEngine.check2open(e[0])
+		emmetEngine.check2open(e[2])
+		emmetEngine.check2open(e[3])
+		emmetEngine.check2open(e[4])
+		
+		emmetEngine.check2close(e[4])
+		emmetEngine.check2close(e[3])
+		emmetEngine.check2close(e[2])
+		
+		emmetEngine.check2open(e[5])
+		emmetEngine.check2open(e[6])
+		
+		emmetEngine.check2close(e[6])
+		emmetEngine.check2close(e[5])
+		
+		emmetEngine.check2close(e[0])
+		
+		

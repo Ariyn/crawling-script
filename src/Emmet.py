@@ -19,6 +19,14 @@ class Emmet:
 		self.reset()
 		self.captures = []
 		
+		self.treeDict = self.makeTreeDict(self.root)
+		self.traversalList = []+self.root.children
+		self.possibleList = []+self.root.children
+		self.check2CurrentNodes = []+self.root.children
+		self.check2OpenList = [
+			{"lastElement":self.root, "list":[], "searched":False}
+		]
+		
 	def __repr__(self):
 		return self.__str__()
 	def __str__(self):
@@ -58,7 +66,7 @@ class Emmet:
 			if not self.currentNodeFiltered and self.parentNodeFiltered:
 				return False
 			try:
-				cn = self.traversal()
+				cn = self.traverse()
 				filtered = cn.Match(element)
 				print(element, filtered, cn)
 				if filtered:
@@ -72,7 +80,7 @@ class Emmet:
 					print("not passed filtered")
 					print(element, filtered, cn)
 					self.currentNodeFiltered = False
-					self.reverseTraversal()
+					self.reverseTraverse()
 			except StopIteration:
 				"""
 				this means finally searching done to the end.
@@ -84,8 +92,72 @@ class Emmet:
 				self.reset()
 				pass
 		return filtered
+	
+	def checkOpenTag(self, element):
+		cn = self.currentEmmetNode
+		if cn.match(element):
+			return True
+		else:
+			return False
+	
+	def makeTreeDict(self, root, level=0):
+		levelDict = {
+			level:[root]
+		}
+		for i in root.children:
+			x = self.makeTreeDict(i, level=level+1)
+			for k,v in x.items():
+				if k not in levelDict:
+					levelDict[k] = []
+				levelDict[k] += v
+		
+		return levelDict
+	
+	def check2open(self, element):
+		newList = []
+		
+		for i, dic in enumerate(self.check2OpenList):
+			if dic["searched"]:
+				continue
+			for c in dic["lastElement"].children:
+				print(c, c.searched, c.match(element))
+				if not c.searched and c.match(element):
+					newList.append({
+						"list":copy(dic["list"]) + [c],
+						"lastElement":c,
+						"searched":dic["searched"]
+					})
 
-	def traversal(self):
+		self.check2OpenList = newList
+		
+		print(element, newList)
+	
+	def check2close(self, element):
+		ol = self.check2OpenList[0] if 0 < len(self.check2OpenList) else None
+		if ol:
+			x = {
+				"list":copy(dic["list"][:-1]),
+				"lastElement":ol["lastElement"],
+				"searched":False
+			}
+			for e in ol["list"]:
+				e.searched = True
+			ol["searched"] = True
+			
+		
+		print("close", self.check2OpenList)
+		
+	
+	def traverseTree(self):
+		node = self.traversalList.pop(0)
+		self.current = node
+		if node in self.possibleList:
+			self.possibleList.remove(node)
+		self.possibleList += node.children
+		self.traversalList = node.children+self.traversalList
+		return node
+	
+	def traverse(self):
 		if self.index < len(self.nodes)-1:
 			self.index += 1
 			retVal = self.nodes[self.index]
@@ -96,9 +168,9 @@ class Emmet:
 	def __iter__(self):
 		return self
 	def __next__(self):
-		return self.traversal()
+		return self.traverse()
 	
-	def reverseTraversal(self):
+	def reverseTraverse(self):
 		self.index -= 1
 
 	def reset(self, succeed=False):

@@ -38,6 +38,8 @@ class EmmetNode(Node):
 		self.isRoot = isRoot
 		self.children = []
 		self.condition, self.captures = [], []
+		
+		self.searched = False
 		self.__parent = None
 		self.__level = 0
 
@@ -78,6 +80,10 @@ class EmmetNode(Node):
 	def capture(self, e):
 		x = [(i[0], e.parsedAttrs[i[1]]) for i in self.captures if i[1] in e.parsedAttrs]
 
+		
+	"""
+		does not check attributes match yet
+	"""
 	def Match(self, element, **kwargs):
 		return self.match(element)
 	def match(self, element):
