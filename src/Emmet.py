@@ -18,7 +18,11 @@ class Emmet:
 
 		self.reset()
 		self.captures = []
+<<<<<<< HEAD
 
+=======
+		
+>>>>>>> 356e927b93d74aae8343e9b0a0fd611e1f2bd5fe
 		self.treeDict = self.makeTreeDict(self.root)
 		self.traversalList = []+self.root.children
 		self.possibleList = []+self.root.children
@@ -26,7 +30,11 @@ class Emmet:
 		self.check2OpenList = [
 			{"lastElement":self.root, "list":[], "searched":False}
 		]
+<<<<<<< HEAD
 
+=======
+		
+>>>>>>> 356e927b93d74aae8343e9b0a0fd611e1f2bd5fe
 	def __repr__(self):
 		return self.__str__()
 	def __str__(self):
@@ -92,15 +100,44 @@ class Emmet:
 				"""
 				this means finally searching done to the end.
 				"""
+<<<<<<< HEAD
 				# print("stop iteration")
 				# print(self.index)
 				# print(self.nodes[-1], element)
 				# print(self.currentNodeFiltered, self.parentNodeFiltered)
 				# print(self.filterHistory)
+=======
+				print("stop iteration")
+				print(self.index)
+				print(self.nodes[-1], element)
+				print(self.currentNodeFiltered, self.parentNodeFiltered)
+				print(self.filterHistory)
+>>>>>>> 356e927b93d74aae8343e9b0a0fd611e1f2bd5fe
 				self.reset()
 				pass
 		return filtered
+	
+	def checkOpenTag(self, element):
+		cn = self.currentEmmetNode
+		if cn.match(element):
+			return True
+		else:
+			return False
+	
+	def makeTreeDict(self, root, level=0):
+		levelDict = {
+			level:[root]
+		}
+		for i in root.children:
+			x = self.makeTreeDict(i, level=level+1)
+			for k,v in x.items():
+				if k not in levelDict:
+					levelDict[k] = []
+				levelDict[k] += v
+		
+		return levelDict
 
+<<<<<<< HEAD
 	def checkOpenTag(self, element):
 		cn = self.currentEmmetNode
 		if cn.match(element):
@@ -121,6 +158,8 @@ class Emmet:
 
 		return levelDict
 
+=======
+>>>>>>> 356e927b93d74aae8343e9b0a0fd611e1f2bd5fe
 	def traverseTree(self):
 		node = self.traversalList.pop(0)
 		self.current = node
@@ -129,7 +168,11 @@ class Emmet:
 		self.possibleList += node.children
 		self.traversalList = node.children+self.traversalList
 		return node
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> 356e927b93d74aae8343e9b0a0fd611e1f2bd5fe
 	def traverse(self):
 		if self.index < len(self.nodes)-1:
 			self.index += 1
@@ -142,7 +185,11 @@ class Emmet:
 		return self
 	def __next__(self):
 		return self.traverse()
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> 356e927b93d74aae8343e9b0a0fd611e1f2bd5fe
 	def reverseTraverse(self):
 		self.index -= 1
 
