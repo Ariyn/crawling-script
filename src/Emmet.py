@@ -92,11 +92,13 @@ class Emmet:
 				"""
 				this means finally searching done to the end.
 				"""
+
 				# print("stop iteration")
 				# print(self.index)
 				# print(self.nodes[-1], element)
 				# print(self.currentNodeFiltered, self.parentNodeFiltered)
 				# print(self.filterHistory)
+
 				self.reset()
 				pass
 		return filtered
@@ -121,7 +123,6 @@ class Emmet:
 
 		return levelDict
 
-
 	def traverseTree(self):
 		node = self.traversalList.pop(0)
 		self.current = node
@@ -130,7 +131,6 @@ class Emmet:
 		self.possibleList += node.children
 		self.traversalList = node.children+self.traversalList
 		return node
-
 	def traverse(self):
 		if self.index < len(self.nodes)-1:
 			self.index += 1
