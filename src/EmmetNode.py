@@ -39,7 +39,9 @@ class EmmetNode(Node):
 		self.children = []
 		self.condition, self.captures = [], []
 		
+		self.target = None
 		self.searched = False
+
 		self.__parent = None
 		self.__level = 0
 
@@ -77,6 +79,12 @@ class EmmetNode(Node):
 		
 		return x
 	
+	def findTerminal(self):
+		cTerminal = sum([i.findTerminal() for i in self.children])
+		if cTerminal == 0:
+			cTerminal += 1
+		return cTerminal
+
 	def capture(self, e):
 		x = [(i[0], e.parsedAttrs[i[1]]) for i in self.captures if i[1] in e.parsedAttrs]
 
@@ -120,7 +128,7 @@ def splitToken(string):
 	cpStr = copy.copy(string)
 	tokens = []
 	index = 0
-	while len(cpStr) != 0 and index < 10:
+	while len(cpStr) != 0:
 		index += 1
 		for exp in exps:
 			s = exp.search(cpStr)
@@ -129,7 +137,6 @@ def splitToken(string):
 				tokens.append((s, exp))
 				cpStr = cpStr[len(s.group(0)):].lstrip()
 				continue
-
 	return tokens
 
 def parse(tokens):
@@ -162,6 +169,7 @@ def parse(tokens):
 				stack = stack[:-2]+stack[-1:]
 			elif oper.raw == "+":
 				stack[-3].parent.children.append(stack[-1])
+				stack[-1].parent = stack[-3].parent
 				stack = stack[:-2]+stack[-1:]
 			elif oper.raw == "*":
 				pass
