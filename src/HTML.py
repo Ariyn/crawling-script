@@ -102,7 +102,7 @@ class MyHTMLParser(HTMLParser):
 		self.tags.append(e)
 		self.parsingTags.append(e)
 
-		if tag in ["img", "br"] and not oneline:
+		if tag in ["img", "br", "input"] and not oneline:
 			self.__handle_endtag__(tag, oneline=True)
 
 	def __handle_endtag__(self, tag, oneline=False):
@@ -142,10 +142,12 @@ class MyHTMLParser(HTMLParser):
 		dmls = [i.captures for i in self.emmetEngine]
 		return dmls
 
-	def parse(self):
+	def parse(self, html=None):
 		"""
 		wrapper of HTMLParser.feed
 		"""
+		if html:
+			self.html = html
 		self.feed(self.html)
 
 	def error(self, x):
