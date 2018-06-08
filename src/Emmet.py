@@ -121,6 +121,7 @@ class Emmet:
 
 		return levelDict
 
+
 	def traverseTree(self):
 		node = self.traversalList.pop(0)
 		self.current = node
