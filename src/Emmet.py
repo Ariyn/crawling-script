@@ -15,7 +15,7 @@ class Emmet:
 		self.dataSize = 0
 		self.root = parse(self.splitPattern)
 		self.nodes = self.root.travel(format=lambda index, x:[x])
-
+		self.searchedAll = False
 		self.reset()
 		self.captures = []
 
@@ -52,28 +52,37 @@ class Emmet:
 	"""
 	def Check(self, element, endTag=False, oneline=None):
 		filtered = False
-
+		# if endTag and element != self.currentNode.target and element.tag == "div" and "shelf-item" in element.classes:
+			# print("rignt div closing")
+			# print("  ", self.currentNode)
 		if endTag and element == self.currentNode.target:
+			searchedAll = self.searchedAll
 			x = [(i[0], element.getAttr(i[1])) for i in self.currentNode.captures if self.currentNode.captures]
 			for name, value in x:
 				if name in x and type(self.currentCapture[name]) != list:
 					self.currentCapture[name] = [self.currentCapture[name]]
-				elif name not in x:
+				if name not in x:
 					self.currentCapture[name] = value
 				elif name in self.currentCapture:
 					self.currentCapture[name].append(value)
 
 			if len(self.filterHistory)+1 == len(self.nodes):
-				self.reset(succeed=self.currentNodeFiltered)
-			else:
-				x = False
-				for c in self.currentNode.children:
-					x = x or c.searched
-				self.currentNode.searched = False or self.currentNode.children != [] or x
-				self.currentNode.target = None
-				self.currentNode = self.filterHistory[-1]
+				searchedAll = True
 
-		else:
+			for c in self.currentNode.children:
+				searchedAll = self.searchedAll or c.searched
+			self.currentNode.searched = False or self.currentNode.children != [] or searchedAll
+			self.currentNode.target = None
+
+			self.filterHistory.pop(-1)
+			self.elementHistory.pop(-1)
+			self.currentNode = self.filterHistory[-1]
+
+			if len(self.filterHistory) == 1:
+				## means [<root>]
+				self.reset(succeed=searchedAll)
+
+		elif not endTag:
 			try:
 				cn = self.traverse()
 				if not cn.searched and cn.Match(element):
@@ -99,7 +108,7 @@ class Emmet:
 				# print(self.currentNodeFiltered, self.parentNodeFiltered)
 				# print(self.filterHistory)
 
-				self.reset()
+				# self.reset()
 				pass
 		return filtered
 
@@ -154,6 +163,7 @@ class Emmet:
 		self.elementHistory = []
 		self.index = 0
 		self.currentNode = self.root
+		self.searchedAll = False
 		if succeed:
 			self.captures.append(copy(self.currentCapture))
 		self.currentCapture = {}

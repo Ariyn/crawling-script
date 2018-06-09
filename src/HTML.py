@@ -81,7 +81,7 @@ class MyHTMLParser(HTMLParser):
 	"""
 	custom html parser
 	"""
-	onelineTags = ["img", "br"]
+	onelineTags = ["img", "br", "input"]
 	def __init__(self):
 		super(MyHTMLParser, self).__init__()
 		self.root = Element("Root")
@@ -102,7 +102,7 @@ class MyHTMLParser(HTMLParser):
 		self.tags.append(e)
 		self.parsingTags.append(e)
 
-		if tag in ["img", "br", "input"] and not oneline:
+		if tag in self.onelineTags and not oneline:
 			self.__handle_endtag__(tag, oneline=True)
 
 	def __handle_endtag__(self, tag, oneline=False):
