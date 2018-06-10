@@ -18,6 +18,7 @@ class Emmet:
 		self.searchedAll = False
 		self.reset()
 		self.captures = []
+		self.properlyClosed = 1
 
 		self.treeDict = self.makeTreeDict(self.root)
 		self.traversalList = []+self.root.children
@@ -66,21 +67,22 @@ class Emmet:
 				elif name in self.currentCapture:
 					self.currentCapture[name].append(value)
 
-			if len(self.filterHistory)+1 == len(self.nodes):
-				searchedAll = True
+			self.properlyClosed += 1
 
 			for c in self.currentNode.children:
-				searchedAll = self.searchedAll or c.searched
+				searchedAll = searchedAll or c.searched
 			self.currentNode.searched = False or self.currentNode.children != [] or searchedAll
 			self.currentNode.target = None
 
 			self.filterHistory.pop(-1)
 			self.elementHistory.pop(-1)
-			self.currentNode = self.filterHistory[-1]
 
-			if len(self.filterHistory) == 1:
-				## means [<root>]
+			if self.properlyClosed == len(self.nodes):
+				# print("here")
 				self.reset(succeed=searchedAll)
+			else:
+				# print(self.properlyClosed, len(self.nodes))
+				self.currentNode = self.filterHistory[-1]
 
 		elif not endTag:
 			try:
@@ -162,6 +164,7 @@ class Emmet:
 		self.filterHistory = []
 		self.elementHistory = []
 		self.index = 0
+		self.properlyClosed = 1
 		self.currentNode = self.root
 		self.searchedAll = False
 		if succeed:
