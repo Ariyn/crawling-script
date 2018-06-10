@@ -7,11 +7,12 @@ class Response:
 		self.response = res
 		self.headers = {}
 		if res.headers:
-			for key, value in dict(res.headers).items():
-				if key in self.headers and type(self.headers[key]) != list:
-					self.headers[key] = [self.headers[key]]
-				if type(self.headers[key]) == list:
-					self.headers[key].append(value)
+			for key, value in res.headers.items():
+				if key in self.headers:
+					if type(self.headers[key]) != list:
+						self.headers[key] = [self.headers[key]]
+					if type(self.headers[key]) == list:
+						self.headers[key].append(value)
 				else:
 					self.headers[key] = value
 		self.encoding = ""
@@ -35,7 +36,7 @@ class Response:
 	def __getattr__(self, key):
 		if key not in self.keys:
 			return self.response.__getattribute__(key)
-		
+
 	@staticmethod
 	def unzip(file, encoding="utf-8"):
 		return gzip.GzipFile(fileobj=file).read().decode(encoding)
