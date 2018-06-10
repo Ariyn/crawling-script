@@ -5,10 +5,18 @@ class Response:
 
 	def __init__(self, res):
 		self.response = res
-		self.headers = dict(res.headers) if res.headers else {}
+		self.headers = {}
+		if res.headers:
+			for key, value in dict(res.headers).items():
+				if key in self.headers and type(self.headers[key]) != list:
+					self.headers[key] = [self.headers[key]]
+				if type(self.headers[key]) == list:
+					self.headers[key].append(value)
+				else:
+					self.headers[key] = value
 		self.encoding = ""
 
-		self.encoding = res.headers.get("Content-Encoding")	
+		self.encoding = res.headers.get("Content-Encoding")
 		if self.encoding == "gzip":
 			self.html = gzip.GzipFile(fileobj=res).read()
 		else:
@@ -20,7 +28,7 @@ class Response:
 			self.success = False
 
 		self.html = self.html.decode("utf-8")
-		self.cookie = res.headers.get("Set-Cookie")
+		self.cookie = self.headers.get("Set-Cookie")
 
 		self.keys = [i for i in dir(self) if "__" not in i]
 
