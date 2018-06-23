@@ -28,7 +28,6 @@ class Tester(unittest.TestCase):
 	def setUp(self):
 		pass
 
-	# @unittest.skip("")
 	def test_real_github_html_sample(self):
 		html = MyHTMLParser()
 		html.setFilter(self.scripts[0])
@@ -37,9 +36,6 @@ class Tester(unittest.TestCase):
 
 	def test_real_github_html_sample2(self):
 		html = MyHTMLParser()
-		# ee = Emmet(self.scripts[1])
-		# print(ee.nodes)
-		# print(ee.nodes[4], ee.nodes[6], ee.nodes[8])
 		html.setFilter(self.scripts[1])
 		html.parse(self.htmlString)
 		print(html.getDMLS())

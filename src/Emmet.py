@@ -53,9 +53,6 @@ class Emmet:
 	"""
 	def Check(self, element, endTag=False, oneline=None):
 		filtered = False
-		# if endTag and element != self.currentNode.target and element.tag == "div" and "shelf-item" in element.classes:
-			# print("rignt div closing")
-			# print("  ", self.currentNode)
 		if endTag and element == self.currentNode.target:
 			searchedAll = self.searchedAll
 			x = [(i[0], element.getAttr(i[1])) for i in self.currentNode.captures if self.currentNode.captures]
@@ -81,7 +78,6 @@ class Emmet:
 				# print("here")
 				self.reset(succeed=searchedAll)
 			else:
-				# print(self.properlyClosed, len(self.nodes))
 				if self.filterHistory:
 					self.currentNode = self.filterHistory[-1]
 				else:

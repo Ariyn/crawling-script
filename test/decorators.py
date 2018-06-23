@@ -91,7 +91,6 @@ class Tester(unittest.TestCase):
 	def test_crawl_real_google(self):
 		response = crawlGoogle("https://google.com")
 
-# 		print(response.headers)
 		self.assertEqual(response.code, 200)
 		self.assertEqual(response.success, True)
 # 	def test_crawl_test(self):
