@@ -128,6 +128,67 @@ def compressFile(name, target, destination, removeOriginal=False):
 
 	return fileName
 
+## cookie manager must be singleton instance
+class __cookieManager:
+	keywords = ["set-cookie", "host", "date"]
+	parseCookie = lambda s,c:[i.strip().split("=") for i in c.split(";")]
+	def __saveCookies__(self):
+		for key in self.changedCookie:
+			print(key)
+			with open("%s/%s"%(self.userDir, key), "w") as file:
+				file.write("; ".join(self.__get__(key)))
+	
+	def __init__(self):
+		from sys import platform
+		import atexit
+		from pathlib import Path
+		
+		self.cookies = {}
+		self.changedCookie = set()
+		### is linux
+		if platform == "linux" or platform == "linux2" or platform == "darwin":
+			userDir = "%s/.cookies"%str(Path.home())
+			if not os.path.isdir(userDir):
+				os.mkdir(userDir)
+		elif platform == "win32":
+			userDir = "%userprofile%/cookies"
+			if not os.path.isdir(userDir):
+				os.mkdir(userDir)
+		
+		list = os.scandir(userDir)
+		for file in list:
+			if not file.name.startswith('.') and file.is_file():
+				cookieStr = open(file.path, "r").read()
+				cookie= self.parseCookie(cookieStr)
+				if cookieStr == "":
+					continue
+				self.cookies[file.name] = {}
+				self.cookies[file.name].update(cookie)
+		self.userDir = userDir
+		print(self.__saveCookies__)
+		atexit.register(self.__saveCookies__)
+	
+	def __add__(self, domain, cookie):
+		if domain not in self.cookies:
+			self.cookies[domain] = {}
+		
+		cookie = self.parseCookie(cookie)
+		# https://tools.ietf.org/html/rfc6265#section-5.2
+		self.cookies[domain].update(cookie)
+		self.changedCookie.add(domain)
+		
+	def __get__(self, domain):
+		print(domain)
+		if domain in self.cookies:
+			return "; ".join(["%s=%s"%(k, v) for k,v in self.cookies[domain].items()])
+		else:
+			return ""
+	
+	def __getitem__(self, key):
+		return self.__get__(key)
+	def __setitem__(self, key, value):
+		return self.__add__(key, value)
+
 class Log:
 	debugFile = NamedTemporaryFile(suffix=".log", prefix="crawl-", delete=False)
 	path = "./log/crawl.log"
@@ -169,3 +230,5 @@ class Log:
 	
 	def __exit__(self, exc_type, exc_value, traceback):
 		pass
+
+CookieManager = __cookieManager()

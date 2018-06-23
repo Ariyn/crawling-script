@@ -72,9 +72,9 @@ class Tester(unittest.TestCase):
 		except HTTPError as e:
 			response = e
 			res = Response(response)
-
+		
 			rh["DNT"] = 1
-			rh["Cookie"] = res.cookie.replace("HttpOnly;", "")+"; cf_use_ob=443;"
+			rh["Cookie"] = ";".join(res.cookie).replace("HttpOnly;", "")+"; cf_use_ob=443;"
 			request = urllib.request.Request("https://manaaspace.net", headers = rh)
 
 			try:

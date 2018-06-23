@@ -82,7 +82,10 @@ class Emmet:
 				self.reset(succeed=searchedAll)
 			else:
 				# print(self.properlyClosed, len(self.nodes))
-				self.currentNode = self.filterHistory[-1]
+				if self.filterHistory:
+					self.currentNode = self.filterHistory[-1]
+				else:
+					self.currentNode = self.currentNode.parent
 
 		elif not endTag:
 			try:

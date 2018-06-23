@@ -10,7 +10,7 @@ from gzip import decompress
 from random import randrange
 
 from .HTML import MyHTMLParser
-from .tools import GetHost, randomHeader, Log, lorem
+from .tools import GetHost, randomHeader, Log, lorem, CookieManager
 from .response import Response
 
 headers = randomHeader()
@@ -38,7 +38,14 @@ def crawl(f):
 		quotes = quote
 		save = False
 		data = None
-
+		
+		domain = url.replace("https://","").replace("http://","").split("/")[0]
+		domain = domain.split(".")
+		if len(domain) == 2:
+			domain = ".".join(domain)
+		elif 2<len(domain):
+			domain = ".".join(domain[-2:])
+		
 		if "referer" in kwargs:
 			headers["Referer"] = kwargs["referer"]
 			if "referer" not in args:
@@ -56,6 +63,8 @@ def crawl(f):
 		if "cookie" in kwargs:
 			headers["Cookie"] = kwargs["cookie"]
 			del kwargs["cookie"]
+		else:
+			headers["Cookie"] = CookieManager[domain]
 
 		if "data" in kwargs:
 			data = urlencode(kwargs["data"]).encode("utf-8")
@@ -98,6 +107,9 @@ def crawl(f):
 # 				retVal = lambda res:res
 		retVal = lambda res: f(res, *args, **kwargs)
 		response = Response(res)
+		for key, value in response.response.headers.items():
+			if key.lower() == "set-cookie":
+				CookieManager[domain] = value
 		if save:
 			open(save, "w").write(res.html)
 		return retVal(response)
