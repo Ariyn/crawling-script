@@ -36,6 +36,14 @@ class Response:
 	def __getattr__(self, key):
 		if key not in self.keys:
 			return self.response.__getattribute__(key)
+	
+	def isCfChallenge(self):
+		return (
+			self.code == 503
+			and self.headers.get("Server", "").startswith("cloudflare")
+			and "jschl_vc" in self.html
+			and "jschl_answer" in self.html
+		)
 
 	@staticmethod
 	def unzip(file, encoding="utf-8"):
