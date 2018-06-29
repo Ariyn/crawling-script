@@ -129,9 +129,9 @@ def compressFile(name, target, destination, removeOriginal=False):
 	return fileName
 
 ## cookie manager must be singleton instance
-class __cookieManager:
+class __cookieManager__:
 	keywords = ["set-cookie", "host", "date"]
-	parseCookie = lambda s,c:[i.strip().split("=") for i in c.split(";")]
+	
 	def __saveCookies__(self):
 		for key in self.changedCookie:
 			print(key)
@@ -159,7 +159,7 @@ class __cookieManager:
 		for file in list:
 			if not file.name.startswith('.') and file.is_file():
 				cookieStr = open(file.path, "r").read()
-				cookie= self.parseCookie(cookieStr)
+				cookie= __cookieManager__.parseCookie(cookieStr)
 				if cookieStr == "":
 					continue
 				self.cookies[file.name] = {}
@@ -168,11 +168,17 @@ class __cookieManager:
 		print(self.__saveCookies__)
 		atexit.register(self.__saveCookies__)
 	
+	@staticmethod
+	def parseCookie(cookie):
+		pc = [i.strip().split("=") for i in cookie.split(";")]
+		pc = [i if len(i) == 2 else [i[0], i[0]] for i in pc]
+		return pc
+	
 	def __add__(self, domain, cookie):
 		if domain not in self.cookies:
 			self.cookies[domain] = {}
 		
-		cookie = self.parseCookie(cookie)
+		cookie = __cookieManager__.parseCookie(cookie)
 		# https://tools.ietf.org/html/rfc6265#section-5.2
 		self.cookies[domain].update(cookie)
 		self.changedCookie.add(domain)
@@ -226,9 +232,10 @@ class Log:
 			self.log.stdStreamHandler = True
 
 	def __enter__(self):
+		self.log.__parent__ = self
 		return self.log
 	
 	def __exit__(self, exc_type, exc_value, traceback):
 		pass
 
-CookieManager = __cookieManager()
+CookieManager = __cookieManager__()
