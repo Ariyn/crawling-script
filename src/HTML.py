@@ -86,6 +86,7 @@ class MyHTMLParser(HTMLParser):
 		super(MyHTMLParser, self).__init__()
 		self.root = Element("Root")
 		self.html = ""
+		self.response = None
 
 		self.parsingTags = [self.root]
 		self.tags = [self.root]

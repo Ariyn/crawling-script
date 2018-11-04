@@ -103,6 +103,7 @@ def crawl(f):
 					"url":url,
 					"headers":str(res.headers)
 				}
+# 				print(e, data)
 				log.error('crawling error', extra = data)
 # 				retVal = lambda res:res
 		retVal = lambda res: f(res, *args, **kwargs)

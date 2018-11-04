@@ -1,1 +1,1 @@
-__all__ = ['decorators', 'HTMLParser', 'Emmet', 'tools']
+__all__ = ['decorators', 'HTML', 'Emmet', 'tools', 'EmmetNode', 'response']

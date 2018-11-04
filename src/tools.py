@@ -134,7 +134,7 @@ class __cookieManager__:
 	
 	def __saveCookies__(self):
 		for key in self.changedCookie:
-			print(key)
+# 			print(key)
 			with open("%s/%s"%(self.userDir, key), "w") as file:
 				file.write("; ".join(self.__get__(key)))
 	
@@ -165,7 +165,7 @@ class __cookieManager__:
 				self.cookies[file.name] = {}
 				self.cookies[file.name].update(cookie)
 		self.userDir = userDir
-		print(self.__saveCookies__)
+# 		print(self.__saveCookies__)
 		atexit.register(self.__saveCookies__)
 	
 	@staticmethod
@@ -184,7 +184,7 @@ class __cookieManager__:
 		self.changedCookie.add(domain)
 		
 	def __get__(self, domain):
-		print(domain)
+# 		print(domain)
 		if domain in self.cookies:
 			return "; ".join(["%s=%s"%(k, v) for k,v in self.cookies[domain].items()])
 		else:
@@ -205,7 +205,6 @@ class Log:
 		debug = debug or self.debug
 		if format is None:
 			format = Log.format
-
 		self.log = logging.getLogger(name)
 		if not hasattr(self.log, "stdFileHandler"):
 			setattr(self.log, "stdFileHandler", False)
@@ -224,7 +223,7 @@ class Log:
 			fileHandler.setFormatter(self.formatter)
 			self.log.addHandler(fileHandler)
 			self.log.stdFileHandler = True
-
+	
 		if debug and not self.log.stdStreamHandler:
 			streamHandler = logging.StreamHandler()
 			streamHandler.setFormatter(self.formatter)
