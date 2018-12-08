@@ -5,6 +5,6 @@ cache:
 python:
     - '3.6'
 install:
-    - pip3 install apex
+    - mkdir log
 script:
-    pytest
+    - pytest
