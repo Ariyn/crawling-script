@@ -1,6 +1,9 @@
 import unittest
 
-import apex.functions.cap.main as main
+try:
+	import apex.functions.cap.main as main
+except:
+	exit(0)
 import src.decorators as decorators
 
 @decorators.crawl
@@ -15,6 +18,6 @@ class test_apex_lambda(unittest.TestCase):
 	def test_setup(self):
 		result = main.lambda_handler(self.parseCase[0], None)
 		print(result)
-		
+
 		x = testCrawl("https://example.org")
 		print(x)
