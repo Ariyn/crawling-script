@@ -39,3 +39,13 @@ result
 > python3 crawl.py
 example.org/example.png, example!
 ```
+
+## script spec
+```pre
+  > : children
+  + : sibling
+  **: repeat (Not working currently.)
+  (): has same ancestor
+  {usingName:=targetName}: capturing variables. get target's value with targetName, put into usingName.
+  [condition=1]: conditions. only seek right condition tags.
+```
