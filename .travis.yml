@@ -6,7 +6,6 @@ python:
     - '3.6'
 install:
     - mkdir log
-    - mkdir sample
     - wget http://example.org -O sample/example.html
 script:
     - pytest
