@@ -17,9 +17,9 @@ class Tester(unittest.TestCase):
 	def test_html_parse(self):
 		p = MyHTMLParser()
 
-		with open("sample/example.html","rb") as file:
-# 			html = file.read().decode("utf-8")
-			html = Response.unzip(file)
+		with open("sample/example.html","r") as file:
+			html = file.read()
+			# html = Response.unzip(file)
 # 			open("sample/github.utf8.html", "w").write(html)
 			p.html = html
 		p.setFilter(self.capScript[1])
