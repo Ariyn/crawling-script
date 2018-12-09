@@ -63,8 +63,8 @@ class Tester(unittest.TestCase):
 	
 # 	@mock.patch("urllib.request.urlopen")
 	def test_response_structure(self, mockUrlopen=None):
-		rh = randomHeader("manaaspace.net")
-		request = urllib.request.Request("https://manaaspace.net", headers = rh)
+		rh = randomHeader("example.org")
+		request = urllib.request.Request("http://example.org", headers = rh)
 		try:
 			response = urllib.request.urlopen(request)
 			print(dir(response))
@@ -75,7 +75,7 @@ class Tester(unittest.TestCase):
 		
 			rh["DNT"] = 1
 			rh["Cookie"] = ";".join(res.cookie).replace("HttpOnly;", "")+"; cf_use_ob=443;"
-			request = urllib.request.Request("https://manaaspace.net", headers = rh)
+			request = urllib.request.Request("http://example.org", headers = rh)
 
 			try:
 				response = urllib.request.urlopen(request)

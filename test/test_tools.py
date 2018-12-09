@@ -5,10 +5,12 @@ from unittest.mock import MagicMock, mock_open
 import urllib.request
 from urllib.error import HTTPError
 
-from tempfile import TemporaryDirectory, NamedTemporaryFile, gettempdir
+# from tempfile import TemporaryDirectory, NamedTemporaryFile, gettempdir
 
 import os
 import logging
+import re
+from datetime import datetime
 
 import src.tools as tools
 from src.sample import rm
@@ -84,10 +86,24 @@ class Tester(unittest.TestCase):
 			("file404Name2", "http://example.org/fileName2")
 		]
 		with tools.Log() as log:
+			now = datetime.now()
+			strNow = now.strftime("%Y-%m-%d")
+
 			tools.__downloadProcess__(path, header, urls, interval, 0, log)
-		x = os.path.exists(tools.Log.file.name)
-		self.assertTrue(x)
-	
+			files = [i.baseFilename for i in log.handlers if "baseFilename" in dir(i)]
+			for file in files:
+				with open(file, "r") as f:
+					logs = f.read().strip().split("\n\n")[-2:]
+				logInfos = [re.match(r"%s .+? (.+?) download error to (.+?) (\d+)"%(strNow), logLine) for logLine in logs]
+
+				for i, logInfo in enumerate(logInfos):
+					self.assertNotEqual(logInfo, None)
+					logInfo = logInfo.groups()
+
+					self.assertEqual(logInfo[0],urls[i][1])
+					self.assertEqual(logInfo[1],os.path.join(path, urls[i][0]).replace("\\","/"))
+					self.assertEqual(logInfo[2], "404")
+
 	@mock.patch('src.sample.os')
 	def test_rm(self, my_mock):
 		rm("sample.txt")

@@ -81,7 +81,7 @@ def __downloadProcess__(path, header, urls, interval, index, logger):
 			x.close()
 
 		except HTTPError as e:
-			logger.error('download error to %s', path, extra = {
+			logger.error('download error to %s/%s', path, i[0], extra = {
 				"code":str(e.code),
 				"reason":e.reason,
 				"url":i[1]
