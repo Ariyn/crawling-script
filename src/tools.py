@@ -53,14 +53,14 @@ def multiDownload(path, referer, urls, interval=0.5, chunkSize=5):
 
 	headers = randomHeader()
 	headers["Referer"] = referer
-	
+
 	processList = []
 	headers["Host"] = GetHost(urls[0][1])
 
 	newUrls = []
 	for i in range(0, len(urls), chunkSize):
 		newUrls.append(urls[i:i+chunkSize])
-	
+
 	with Log() as log:
 		for i,v in enumerate(newUrls):
 			p = multiprocessing.Process(target=__downloadProcess__, args=(path, headers, v, interval, i, log))
@@ -70,7 +70,7 @@ def multiDownload(path, referer, urls, interval=0.5, chunkSize=5):
 	for p in processList:
 		p.join()
 
-def __downloadProcess__(path, header, urls, interval, index, logger):	
+def __downloadProcess__(path, header, urls, interval, index, logger):
 	for i in urls:
 		try:
 			req = Request(i[1], headers=header)
@@ -131,18 +131,17 @@ def compressFile(name, target, destination, removeOriginal=False):
 ## cookie manager must be singleton instance
 class __cookieManager__:
 	keywords = ["set-cookie", "host", "date"]
-	
+
 	def __saveCookies__(self):
 		for key in self.changedCookie:
-# 			print(key)
 			with open("%s/%s"%(self.userDir, key), "w") as file:
-				file.write("; ".join(self.__get__(key)))
-	
+				file.write(self.__get__(key))
+
 	def __init__(self):
 		from sys import platform
 		import atexit
 		from pathlib import Path
-		
+
 		self.cookies = {}
 		self.changedCookie = set()
 		### is linux
@@ -151,10 +150,10 @@ class __cookieManager__:
 			if not os.path.isdir(userDir):
 				os.mkdir(userDir)
 		elif platform == "win32":
-			userDir = "%userprofile%/cookies"
+			userDir = "%s/Documents/cookies"%(os.environ['USERPROFILE'])
 			if not os.path.isdir(userDir):
 				os.mkdir(userDir)
-		
+
 		list = os.scandir(userDir)
 		for file in list:
 			if not file.name.startswith('.') and file.is_file():
@@ -167,29 +166,29 @@ class __cookieManager__:
 		self.userDir = userDir
 # 		print(self.__saveCookies__)
 		atexit.register(self.__saveCookies__)
-	
+
 	@staticmethod
 	def parseCookie(cookie):
 		pc = [i.strip().split("=") for i in cookie.split(";")]
 		pc = [i if len(i) == 2 else [i[0], i[0]] for i in pc]
 		return pc
-	
+
 	def __add__(self, domain, cookie):
 		if domain not in self.cookies:
 			self.cookies[domain] = {}
-		
+
 		cookie = __cookieManager__.parseCookie(cookie)
 		# https://tools.ietf.org/html/rfc6265#section-5.2
 		self.cookies[domain].update(cookie)
 		self.changedCookie.add(domain)
-		
+
 	def __get__(self, domain):
 # 		print(domain)
 		if domain in self.cookies:
 			return "; ".join(["%s=%s"%(k, v) for k,v in self.cookies[domain].items()])
 		else:
 			return ""
-	
+
 	def __getitem__(self, key):
 		return self.__get__(key)
 	def __setitem__(self, key, value):
@@ -200,7 +199,7 @@ class Log:
 	path = "./log/crawl.log"
 	debug = False
 	format = "%(asctime)-15s %(url)s %(message)s %(code)-3s\n\t%(reason)s\n"
-	
+
 	def __init__(self, name="crawler", path=None, format=None, debug=False):
 		debug = debug or self.debug
 		if format is None:
@@ -209,21 +208,21 @@ class Log:
 		if not hasattr(self.log, "stdFileHandler"):
 			setattr(self.log, "stdFileHandler", False)
 			setattr(self.log, "stdStreamHandler", False)
-			
+
 		self.log.setLevel(logging.INFO if not debug else logging.DEBUG)
 		self.formatter = logging.Formatter(format)
-		
+
 		if path is not None:
-			self.path = path	
+			self.path = path
 # 		if debug:
 # 			self.path = self.debugFile.name
-		
+
 		if not self.log.stdFileHandler:
 			fileHandler = RotatingFileHandler(self.path, maxBytes=1024*1024)
 			fileHandler.setFormatter(self.formatter)
 			self.log.addHandler(fileHandler)
 			self.log.stdFileHandler = True
-	
+
 		if debug and not self.log.stdStreamHandler:
 			streamHandler = logging.StreamHandler()
 			streamHandler.setFormatter(self.formatter)
@@ -233,7 +232,7 @@ class Log:
 	def __enter__(self):
 		self.log.__parent__ = self
 		return self.log
-	
+
 	def __exit__(self, exc_type, exc_value, traceback):
 		pass
 

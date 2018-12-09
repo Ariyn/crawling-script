@@ -20,16 +20,16 @@ def crawlGoogle(response):
 
 class Tester(unittest.TestCase):
 	returnValue = b'<html>contents</html>'
-	
+
 	@staticmethod
 	def setUpClass():
 		format = "%(asctime)-15s %(code)-3s %(url)s %(message)s\n\t%(reason)s\n\t%(headers)s"
 		Tester.formatter = logging.Formatter(format)
 		Tester.log = logging.getLogger("test.decorators")
 		Log.format = format
-		
+
 		Log.debug = True
-	
+
 	def setUp(self):
 		cm = MagicMock()
 		cm.getcode.return_value = 200
@@ -47,11 +47,11 @@ class Tester(unittest.TestCase):
 		return lambda x: Tester.raiseException(
 			HTTPError(x.full_url, number, msg[number], {}, BytesIO(Tester.returnValue))
 		)
-	
+
 	@staticmethod
 	def raiseException(exception):
 		raise exception
-	
+
 	@mock.patch('src.decorators.urlopen')
 	def test_crawl(self, mockUrlopen):
 		decorator.urlopen.return_value = self.cm
@@ -69,7 +69,7 @@ class Tester(unittest.TestCase):
 		html = crawl_func("http://example.org/")
 		self.assertEqual(html.code, 404)
 		self.assertEqual(html.success, False)
-		
+
 	@mock.patch('src.decorators.urlopen')
 	def test_crawl_exception_503(self, mockUrlopen):
 		decorator.urlopen.side_effect = Tester.genException(503)
@@ -78,7 +78,7 @@ class Tester(unittest.TestCase):
 		html = crawl_func("http://example.org/")
 		self.assertEqual(html.code, 503)
 		self.assertEqual(html.success, False)
-	
+
 	@unittest.skip("decorator logic changed")
 	@mock.patch('src.decorators.urlopen')
 	def test_parser(self, mockUrlopen):
@@ -87,11 +87,11 @@ class Tester(unittest.TestCase):
 		data = data_func("<body><div class='test'>test</div><div class='test2'>test2</div></body>")
 		dmls = data.getDMLS()
 		self.assertEqual(dmls, [[{'text':'test'}]])
-		
+
 	def test_crawl_real_google(self):
 		response = crawlGoogle("https://google.com")
 
-		self.assertEqual(response.code, 200)
+		self.assertTrue(response.code in [200, 301, 302])
 		self.assertEqual(response.success, True)
 # 	def test_crawl_test(self):
 # 		crawl_func = decorator.crawlTest(lambda x: x)
